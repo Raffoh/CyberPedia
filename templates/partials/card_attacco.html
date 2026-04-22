@@ -1,0 +1,23 @@
+<div class="card h-100">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="badge famiglia-badge
+      {% if attacco.get_famiglia == 'rete' %}bg-primary
+      {% elif attacco.get_famiglia == 'web' %}bg-warning text-dark
+      {% elif attacco.get_famiglia == 'social' %}bg-info text-dark
+      {% else %}bg-danger{% endif %}">
+      <i class="bi bi-{% if attacco.get_famiglia == 'rete' %}diagram-3{% elif attacco.get_famiglia == 'web' %}globe{% elif attacco.get_famiglia == 'social' %}people{% else %}virus{% endif %}"></i>
+      {{ attacco.get_famiglia|upper }}
+    </span>
+    <span class="badge badge-{{ attacco.severita }}">{{ attacco.get_severita_display }}</span>
+  </div>
+  <div class="card-body">
+    <h6 class="card-title">
+      <a href="{% url 'attacco-detail' pk=attacco.pk %}" class="text-decoration-none text-light">{{ attacco.nome }}</a>
+    </h6>
+    <p class="card-text text-muted small">{{ attacco.descrizione|truncatewords:20 }}</p>
+  </div>
+  <div class="card-footer text-muted small d-flex justify-content-between">
+    <span><i class="bi bi-person"></i> <a href="{% url 'profilo' user_id=attacco.id_autore.pk %}">{{ attacco.id_autore.username }}</a></span>
+    <span><i class="bi bi-calendar3"></i> {{ attacco.data_pubblicazione }}</span>
+  </div>
+</div>

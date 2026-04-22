@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+media/
+*.log
+.idea/
+.vscode/settings.json
+*.egg-info/
+dist/
+build/
+cyberpedia-docs/
+cyberpedia-docs.zip
+myspider-reference.md

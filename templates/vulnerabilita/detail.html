@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{{ vuln.codice_cve }} · CyberPedia{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <code class="fs-5">{{ vuln.codice_cve }}</code>
+        <span class="badge bg-{% if vuln.cvss_score >= 9 %}danger{% elif vuln.cvss_score >= 7 %}warning text-dark{% elif vuln.cvss_score >= 4 %}info text-dark{% else %}secondary{% endif %} fs-6">CVSS {{ vuln.cvss_score }}</span>
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-3 text-muted">Software</dt><dd class="col-sm-9">{{ vuln.software_affetto }}</dd>
+          <dt class="col-sm-3 text-muted">Anno scoperta</dt><dd class="col-sm-9">{{ vuln.anno_scoperta }}</dd>
+          <dt class="col-sm-3 text-muted">Descrizione</dt><dd class="col-sm-9">{{ vuln.descrizione }}</dd>
+        </dl>
+      </div>
+    </div>
+    <h6 class="text-muted">Attacchi che sfruttano questa vulnerabilità</h6>
+    {% for a in attacchi %}
+    <div class="mb-2">{% include 'partials/card_attacco.html' with attacco=a %}</div>
+    {% empty %}<p class="text-muted">Nessun attacco associato.</p>{% endfor %}
+  </div>
+  <div class="col-lg-4">
+    {% if utente_corrente and utente_corrente.livello >= 5 %}
+    <a href="{% url 'vulnerabilita-edit' pk=vuln.pk %}" class="btn btn-outline-secondary w-100 mb-2"><i class="bi bi-pencil"></i> Modifica</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

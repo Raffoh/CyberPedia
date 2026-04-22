@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}{{ attacco.nome }} · CyberPedia{% endblock %}
+{% block content %}
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          {% if sottoclasse %}
+          <span class="badge famiglia-badge
+            {% if sottoclasse.0 == 'rete' %}bg-primary
+            {% elif sottoclasse.0 == 'web' %}bg-warning text-dark
+            {% elif sottoclasse.0 == 'social' %}bg-info text-dark
+            {% else %}bg-danger{% endif %} me-2">
+            {{ sottoclasse.0|upper }}
+          </span>
+          {% endif %}
+          <span class="badge badge-{{ attacco.severita }}">{{ attacco.get_severita_display }}</span>
+        </div>
+        {% if utente_corrente and utente_corrente == attacco.id_autore or utente_corrente and utente_corrente.livello >= 20 %}
+        <div>
+          <a href="{% url 'attacco-edit' pk=attacco.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+          <form method="post" action="{% url 'attacco-delete' pk=attacco.pk %}" class="d-inline" onsubmit="return confirm('Eliminare questo attacco?')">
+            {% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <h3>{{ attacco.nome }}</h3>
+        {% if attacco.riferimento_mitre %}
+          <span class="badge bg-secondary mb-2"><i class="bi bi-link-45deg"></i> MITRE: {{ attacco.riferimento_mitre }}</span>
+        {% endif %}
+        {% if attacco.immagine %}
+          <img src="{{ attacco.immagine.url }}" class="img-fluid rounded mb-3" alt="{{ attacco.nome }}" style="max-height:300px;object-fit:cover;width:100%">
+        {% endif %}
+        <p class="lead">{{ attacco.descrizione }}</p>
+        <div class="text-muted small mt-3">
+          <i class="bi bi-person"></i> <a href="{% url 'profilo' user_id=attacco.id_autore.pk %}">{{ attacco.id_autore.username }}</a>
+          &nbsp;·&nbsp; <i class="bi bi-calendar3"></i> {{ attacco.data_pubblicazione }}
+        </div>
+      </div>
+    </div>
+
+    {% if sottoclasse %}
+    <div class="card mb-3">
+      <div class="card-header small fw-semibold"><i class="bi bi-info-circle"></i> Dettagli tecnici ({{ sottoclasse.0|upper }})</div>
+      <div class="card-body">
+        {% if sottoclasse.0 == 'rete' %}
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted">Protocollo</dt><dd class="col-sm-8">{{ sottoclasse.1.protocollo }}</dd>
+            <dt class="col-sm-4 text-muted">Porta bersaglio</dt><dd class="col-sm-8">{{ sottoclasse.1.porta_bersaglio|default:"—" }}</dd>
+            <dt class="col-sm-4 text-muted">Livello OSI</dt><dd class="col-sm-8">{{ sottoclasse.1.livello_osi }}</dd>
+          </dl>
+        {% elif sottoclasse.0 == 'web' %}
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted">Tipo injection</dt><dd class="col-sm-8">{{ sottoclasse.1.tipo_injection }}</dd>
+            <dt class="col-sm-4 text-muted">OWASP</dt><dd class="col-sm-8"><span class="badge bg-warning text-dark">{{ sottoclasse.1.owasp_category }}</span></dd>
+            {% if sottoclasse.1.url_esempio %}<dt class="col-sm-4 text-muted">URL esempio</dt><dd class="col-sm-8 text-break">{{ sottoclasse.1.url_esempio }}</dd>{% endif %}
+          </dl>
+        {% elif sottoclasse.0 == 'social' %}
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted">Canale</dt><dd class="col-sm-8">{{ sottoclasse.1.get_canale_display }}</dd>
+            <dt class="col-sm-4 text-muted">Leva psicologica</dt><dd class="col-sm-8">{{ sottoclasse.1.leva_psicologica }}</dd>
+          </dl>
+        {% else %}
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted">Tipo payload</dt><dd class="col-sm-8">{{ sottoclasse.1.tipo_payload }}</dd>
+            <dt class="col-sm-4 text-muted">Persistenza</dt><dd class="col-sm-8">{% if sottoclasse.1.persistenza %}<span class="badge bg-danger">Sì</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</dd>
+            <dt class="col-sm-4 text-muted">Propagazione</dt><dd class="col-sm-8">{{ sottoclasse.1.propagazione }}</dd>
+          </dl>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Tab vulnerabilità / contromisure / casi -->
+    <ul class="nav nav-tabs mb-3" id="detailTab">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-vuln">Vulnerabilità ({{ vulnerabilita|length }})</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-ctrl">Contromisure ({{ contromisure|length }})</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-casi">Casi Reali ({{ casi|length }})</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tab-vuln">
+        {% for v in vulnerabilita %}
+        <div class="d-flex justify-content-between py-2 border-bottom border-secondary">
+          <div>
+            <a href="{% url 'vulnerabilita-detail' pk=v.pk %}"><code>{{ v.codice_cve }}</code></a>
+            <span class="text-muted small ms-2">{{ v.software_affetto }}</span>
+          </div>
+          <span class="badge bg-{% if v.cvss_score >= 9 %}danger{% elif v.cvss_score >= 7 %}warning text-dark{% else %}secondary{% endif %}">CVSS {{ v.cvss_score }}</span>
+        </div>
+        {% empty %}<p class="text-muted mt-2">Nessuna vulnerabilità associata.</p>{% endfor %}
+      </div>
+      <div class="tab-pane fade" id="tab-ctrl">
+        {% for m in contromisure %}
+        <div class="d-flex justify-content-between py-2 border-bottom border-secondary">
+          <a href="{% url 'contromisura-detail' pk=m.id_contromisura.pk %}">{{ m.id_contromisura.nome }}</a>
+          <span class="badge bg-{% if m.efficacia == 'alta' %}success{% elif m.efficacia == 'media' %}warning text-dark{% else %}secondary{% endif %}">{{ m.efficacia }}</span>
+        </div>
+        {% empty %}<p class="text-muted mt-2">Nessuna contromisura associata.</p>{% endfor %}
+      </div>
+      <div class="tab-pane fade" id="tab-casi">
+        {% for c in casi %}
+        <div class="py-2 border-bottom border-secondary">
+          <a href="{% url 'caso-detail' pk=c.pk %}">{{ c.nome_incidente }}</a>
+          <span class="text-muted small ms-2">{{ c.vittima }} · {{ c.anno }}</span>
+          {% if c.danno_stimato_usd %}<span class="badge bg-danger ms-2">${{ c.danno_stimato_usd|floatformat:0 }}</span>{% endif %}
+        </div>
+        {% empty %}<p class="text-muted mt-2">Nessun caso reale documentato.</p>{% endfor %}
+      </div>
+    </div>
+
+    <!-- Commenti -->
+    <div class="card mt-4">
+      <div class="card-header small fw-semibold"><i class="bi bi-chat-left-text"></i> Commenti ({{ commenti|length }})</div>
+      <div class="card-body">
+        {% for c in commenti %}
+        <div class="mb-3 pb-2 border-bottom border-secondary">
+          <div class="d-flex justify-content-between">
+            <strong class="small"><a href="{% url 'profilo' user_id=c.interazione.id_utente.pk %}">{{ c.interazione.id_utente.username }}</a></strong>
+            <span class="text-muted" style="font-size:.75rem">{{ c.interazione.data|date:"d/m/Y H:i" }}</span>
+          </div>
+          <p class="mb-0 mt-1">{{ c.interazione.testo_commento }}</p>
+        </div>
+        {% empty %}<p class="text-muted">Nessun commento ancora. Sii il primo!</p>{% endfor %}
+
+        {% if utente_corrente %}
+        <form method="post" action="{% url 'interazione-attacco' pk=attacco.pk %}" class="mt-3">
+          {% csrf_token %}
+          <input type="hidden" name="tipo" value="commento">
+          <div class="mb-2">
+            <textarea name="testo_commento" class="form-control" rows="2" placeholder="Scrivi un commento..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-cp-primary btn-sm">Commenta</button>
+        </form>
+        {% else %}
+        <p class="text-muted small mt-2"><a href="{% url 'login' %}">Accedi</a> per commentare.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body text-center">
+        {% if utente_corrente %}
+        <form method="post" action="{% url 'interazione-attacco' pk=attacco.pk %}" class="d-inline">
+          {% csrf_token %}<input type="hidden" name="tipo" value="like">
+          <button type="submit" class="btn {% if ha_messo_like %}btn-danger{% else %}btn-outline-danger{% endif %} btn-sm">
+            <i class="bi bi-heart{% if ha_messo_like %}-fill{% endif %}"></i> {{ n_like }} Like
+          </button>
+        </form>
+        <form method="post" action="{% url 'interazione-attacco' pk=attacco.pk %}" class="d-inline ms-2">
+          {% csrf_token %}<input type="hidden" name="tipo" value="segnalazione">
+          <button type="submit" class="btn btn-outline-warning btn-sm"><i class="bi bi-flag"></i> Segnala</button>
+        </form>
+        {% else %}
+        <span class="text-muted small"><i class="bi bi-heart"></i> {{ n_like }} like</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header small fw-semibold">Autore</div>
+      <div class="card-body text-center">
+        {% if attacco.id_autore.foto_profilo %}
+          <img src="{{ attacco.id_autore.foto_profilo.url }}" class="rounded-circle mb-2" width="60" height="60" style="object-fit:cover" alt="">
+        {% else %}
+          <i class="bi bi-person-circle fs-1 text-muted"></i>
+        {% endif %}
+        <p class="mb-1 fw-semibold"><a href="{% url 'profilo' user_id=attacco.id_autore.pk %}">{{ attacco.id_autore.username }}</a></p>
+        <small class="text-muted">Livello {{ attacco.id_autore.livello }}</small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

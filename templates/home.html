@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Home · CyberPedia{% endblock %}
+{% block content %}
+
+<div class="row mb-4">
+  <div class="col-12">
+    {% if not utente_corrente %}
+    <div class="card border-danger mb-4">
+      <div class="card-body text-center py-4">
+        <h2 class="text-danger"><i class="bi bi-shield-fill-exclamation"></i> CyberPedia</h2>
+        <p class="lead text-muted">La knowledge base per la sicurezza informatica. Documenta, studia e discuti gli attacchi più rilevanti.</p>
+        <a href="{% url 'register' %}" class="btn btn-cp-primary me-2">Registrati</a>
+        <a href="{% url 'login' %}" class="btn btn-cp-outline">Accedi</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <h5 class="mb-3">
+      <i class="bi bi-virus text-danger"></i>
+      {% if utente_corrente %}Attacchi dai tuoi seguiti{% else %}Ultimi attacchi{% endif %}
+    </h5>
+    {% if attacchi_feed %}
+      <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
+        {% for attacco in attacchi_feed %}
+        <div class="col">{% include 'partials/card_attacco.html' %}</div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card"><div class="card-body text-muted text-center py-4">
+        <i class="bi bi-inbox fs-2"></i>
+        <p class="mt-2">Nessun attacco da mostrare. <a href="{% url 'attacchi-list' %}">Sfoglia tutti gli attacchi</a>.</p>
+      </div></div>
+    {% endif %}
+    <a href="{% url 'attacchi-list' %}" class="btn btn-cp-outline btn-sm">Tutti gli attacchi <i class="bi bi-arrow-right"></i></a>
+  </div>
+
+  <div class="col-lg-4">
+    <h5 class="mb-3"><i class="bi bi-file-earmark-text text-primary"></i> Ultimi articoli</h5>
+    {% for articolo in articoli_feed %}
+    <div class="card mb-2">
+      <div class="card-body py-2 px-3">
+        <a href="{% url 'articolo-detail' pk=articolo.pk %}" class="text-decoration-none text-light fw-semibold small">{{ articolo.titolo }}</a>
+        <div class="text-muted" style="font-size:.75rem">
+          <a href="{% url 'profilo' user_id=articolo.id_autore.pk %}">{{ articolo.id_autore.username }}</a>
+          · {{ articolo.data_pubblicazione }}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <p class="text-muted small">Nessun articolo ancora.</p>
+    {% endfor %}
+
+    <div class="card mt-3">
+      <div class="card-header small fw-semibold"><i class="bi bi-compass"></i> Esplora</div>
+      <div class="list-group list-group-flush">
+        <a href="{% url 'vulnerabilita-list' %}" class="list-group-item list-group-item-action bg-transparent text-light border-secondary small">
+          <i class="bi bi-bug text-warning"></i> Vulnerabilità
+        </a>
+        <a href="{% url 'contromisure-list' %}" class="list-group-item list-group-item-action bg-transparent text-light border-secondary small">
+          <i class="bi bi-shield-check text-success"></i> Contromisure
+        </a>
+        <a href="{% url 'casi-list' %}" class="list-group-item list-group-item-action bg-transparent text-light border-secondary small">
+          <i class="bi bi-journal-text text-info"></i> Casi Reali
+        </a>
+        <a href="{% url 'statistiche' %}" class="list-group-item list-group-item-action bg-transparent text-light border-secondary small">
+          <i class="bi bi-bar-chart-line text-primary"></i> Statistiche SQL
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

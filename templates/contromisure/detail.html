@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}{{ contromisura.nome }} · CyberPedia{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between">
+        <span class="badge bg-{% if contromisura.tipo == 'preventiva' %}success{% elif contromisura.tipo == 'rilevativa' %}info text-dark{% else %}warning text-dark{% endif %}">{{ contromisura.get_tipo_display }}</span>
+        {% if utente_corrente and utente_corrente.livello >= 5 %}
+          <a href="{% url 'contromisura-edit' pk=contromisura.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <h3>{{ contromisura.nome }}</h3>
+        <p>{{ contromisura.descrizione }}</p>
+      </div>
+    </div>
+    <h6 class="text-muted">Attacchi mitigati</h6>
+    {% for m in mitiga_qs %}
+    <div class="d-flex justify-content-between py-2 border-bottom border-secondary">
+      <a href="{% url 'attacco-detail' pk=m.id_attacco.pk %}">{{ m.id_attacco.nome }}</a>
+      <span class="badge bg-{% if m.efficacia == 'alta' %}success{% elif m.efficacia == 'media' %}warning text-dark{% else %}secondary{% endif %}">Efficacia {{ m.efficacia }}</span>
+    </div>
+    {% empty %}<p class="text-muted mt-2">Nessun attacco mitigato.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}
