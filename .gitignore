@@ -13,3 +13,5 @@ build/
 cyberpedia-docs/
 cyberpedia-docs.zip
 myspider-reference.md
+.claude/
+CLAUDE.md
